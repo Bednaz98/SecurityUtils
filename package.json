@@ -1,15 +1,15 @@
 {
-  "name": "@jab/security-utils",
-  "version": "1.0.0",
+  "name": "security-utils",
+  "version": "1.0.1",
   "description": "This is a utility package that combines using, 'dotenv' 'bcrypt' 'crypto-js', 'jsonwebtoken' and 'object-hash' for storing information in a data base either by hash or encryption.",
   "main": "./lib/index.js",
   "files": [
-    "./lib/*"
+    "lib"
   ],
   "scripts": {
     "test": "jest",
     "build": "tsc",
-    "semantic-release": "semantic-release"
+    "publish": "npm i && npm run build && npm pack && npm publish"
   },
   "author": "Joshua Bednaz",
   "license": "MIT",
