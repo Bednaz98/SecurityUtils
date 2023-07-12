@@ -55,7 +55,7 @@ describe('Generate JWT Test', () => {
         expect(result1).toBe(0)
         const result2 = getJWTIndex('dgjgde')
         expect(result2).toBe(0)
-        const data: any = { test2: "test" }, config: JWTConfig = {
+        const data = { test2: "test" }, config: JWTConfig = {
             expireTime: 10,
             subject: "afh",
         }

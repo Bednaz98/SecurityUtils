@@ -29,7 +29,7 @@ export function insertPepper(insertString: string, pepper: string, insertOpt?: s
 export function removePepper(insertString: string, pepper: string, insertOpt?: string) {
     const insertNumber = getInsertIndex(insertString, pepper, -1, insertOpt)
     const tempArray = insertString.split('')
-    let newArray: string[] = []
+    const newArray: string[] = []
     tempArray.forEach((e, i) => {
         if (i !== insertNumber) newArray.push(e)
     })

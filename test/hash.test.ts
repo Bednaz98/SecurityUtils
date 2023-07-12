@@ -25,7 +25,7 @@ describe('Test Hash Functions', () => {
 
     })
     it('insertPepper', () => {
-        const hashString: string = "test", dataType: number = 8;
+        const hashString = "test", dataType = 8;
         const unPepperString = hash(hashString + hashString + dataType);
         const pepperString = insertPepper(hashString, dataType);
         expect(unPepperString).not.toBe(pepperString);

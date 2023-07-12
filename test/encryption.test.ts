@@ -20,7 +20,7 @@ describe('encryption test', () => {
     })
     const undefinedKeys = "9a4b5bdf0f0c0abb07c0cceb97debe50a3a855849a4b5bdf0f0c0abb07c0cceb97debe50a3a85584050d9837e2d8faaa6adc770f22f815d00df13f97";
     it('getEncryptionKey, no valid keys', () => {
-        const number: number = 8, varString: string = "desfhj"
+        const number = 8, varString = "desfhj"
         process.env.SERVER_PRIMARY_ENCRYPTION_A1 = undefined
         process.env.SERVER_PRIMARY_ENCRYPTION_A2 = undefined
         process.env.SERVER_PRIMARY_ENCRYPTION_B1 = undefined
@@ -30,7 +30,7 @@ describe('encryption test', () => {
     })
     const testA1 = "testA!", testA2 = "testA2", testB1 = "testB1", testB2 = "testB2"
     it('getEncryptionKey, valid keys', () => {
-        const number: number = 8, varString: string = "desfhj";
+        const number = 8, varString = "desfhj";
         clearKeys();
         process.env.SERVER_ENCRYPTION_A1 = testA1
         process.env.SERVER_ENCRYPTION_A2 = testA2

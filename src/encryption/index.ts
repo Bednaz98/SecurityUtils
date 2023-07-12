@@ -103,7 +103,7 @@ export function decryptObject(encryptedData: { [key: string | number]: string | 
     const keys = Object.keys(encryptedData)
     const values: any[] = Object.values(encryptedData);
     const decryptValues = values.map((e, i) => {
-        let data = decryptData(e, keyType, (opt + keys[i]))
+        const data = decryptData(e, keyType, (opt + keys[i]))
 
         if (data === "true" || data === "false") return data === "true"
         else if (Number(data)) return Number(data)
