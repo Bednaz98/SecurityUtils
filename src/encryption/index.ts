@@ -112,7 +112,6 @@ export function encryptObjectData(data: { [key: string | number]: string | numbe
     return keys.reduce((o, k, i) => ({ ...o, [k]: values[i] }), {} as { [key: string]: string })
 }
 
-
 /** this function decrypts any arbitrary JavaScript object. 
  * @Note not all data types will work for object values. Accepted values: string | number | boolean | undefined | null
  * @keyType denotes whether or not key group A or B should be utilized
@@ -132,8 +131,7 @@ export function decryptObject<T = ({ [key: string]: string | number | boolean | 
         else return data
     })
     const reduced: any = keys.reduce((o, k, i) => ({ ...o, [k]: decryptValues[i] }), {} as T)
-
-    return reduced
+    return reduced;
 }
 
 
