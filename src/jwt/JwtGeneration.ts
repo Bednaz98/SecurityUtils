@@ -7,7 +7,7 @@ import { convertStringToNumber } from '../common/utilities';
 
 let tokenArray: string[] = [];
 
-/** gets the jwt string from a list of environment variables*/
+/**  INTERNAL FUNCTION DO NOT USE DIRECTLY, gets the jwt string from a list of environment variables*/
 export function getJWTKey(index: number): string {
     if (tokenArray.length < +1) {
         for (let i = 0; i < 100; i++) {
@@ -36,7 +36,7 @@ export function deleteNoneUniqueJWTProperties(JWTObject: any) {
     delete newObject.sub;
     return { ...newObject };
 }
-/** converts a JWT into a number*/
+/** INTERNAL FUNCTION DO NOT USE DIRECTLY, converts a JWT into a number*/
 export function getJWTIndex(jwtString: string | null) {
     const decode = decodeJWT<string | jwt.JwtPayload | null>(jwtString ?? "");
     if (typeof decode === 'string') return convertStringToNumber(decode);
@@ -46,7 +46,7 @@ export function getJWTIndex(jwtString: string | null) {
         return convertStringToNumber(JSON.stringify(jsonString));
     }
 }
-/** returns the issuer string from the systems environment variables*/
+/**  INTERNAL FUNCTION DO NOT USE DIRECTLY, returns the issuer string from the systems environment variables*/
 export function getIssuer() {
     try {
         return process.env.SERVER_JWT_ISSUER ?? "default";
@@ -56,12 +56,12 @@ export function getIssuer() {
 
 }
 /** generate JWT with input data and config*/
-export function generateJWT(data: any, config: JWTConfig): string {
+export function generateJWT(data: any, config?: JWTConfig): string {
     const options: jwt.SignOptions = {
-        expiresIn: config.expireTime,
+        expiresIn: config?.expireTime ?? "1h",
         issuer: getIssuer(),
-        subject: config.subject ?? 'default',
-        audience: config.audience ?? `${getIssuer()}`,
+        subject: config?.subject ?? 'default',
+        audience: config?.audience ?? `${getIssuer()}`,
         jwtid: v4(),
     }
     try {
@@ -73,11 +73,11 @@ export function generateJWT(data: any, config: JWTConfig): string {
 
 }
 
-/** retrieve JWT data*/
+/** retrieve JWT data/ payload */
 export function decodeJWT<T>(jwtString: string): T | string | jwt.JwtPayload | null {
     return jwt.decode(jwtString)
 }
-/** verify if a JWT is valid*/
+/** verify if a JWT is valid without decoding the value */
 export function verifyJWT(jwtString: string, audience?: string, subject?: string) {
     try {
         const decode = JSON.stringify(decodeJWT(jwtString));

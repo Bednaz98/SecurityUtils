@@ -6,15 +6,17 @@ import { convertStringToNumber } from '../common/utilities';
 let encryptionKeysA: string[] = [];
 let encryptionKeysB: string[] = [];
 
-export function getEncryptionKeyArray(type: boolean) {
+/** INTERNAL FUNCTION DO NOT USE DIRECTLY, this functions returns an array of the encryption keys on the server */
+export function getEncryptionKeyArray(type: boolean): string[] {
     return type ? encryptionKeysB : encryptionKeysA;
 }
-/** clears the keys at run time*/
+/** INTERNAL FUNCTION DO NOT USE DIRECTLY,  clears the keys at run time*/
 export function clearKeys() {
     encryptionKeysA = []
     encryptionKeysB = []
 }
 
+/** INTERNAL FUNCTION DO NOT USE DIRECTLY,  this function initializes the getting the encryption key array*/
 export function initEncryptionKeys() {
     if (encryptionKeysA.length < 2) {
         for (let i = 0; i < 100; i++) {
@@ -44,7 +46,7 @@ export function initEncryptionKeys() {
 
 }
 
-/** returns the hash value of the input */
+/** INTERNAL FUNCTION DO NOT USE DIRECTLY,  returns the hash value of the input */
 export function getEncryptionKey(number: number, keyType: boolean, varString: string) {
     initEncryptionKeys();
     const encryptionKeys = getEncryptionKeyArray(keyType)
@@ -63,16 +65,21 @@ export function getEncryptionKey(number: number, keyType: boolean, varString: st
     }
 }
 
-/** gets a single character string from the pepper array*/
+/** INTERNAL FUNCTION DO NOT USE DIRECTLY,  gets a single character string from the pepper array*/
 export function getEncryptionPepper(index: number) {
     return getPepper(index + 3)
 }
 
-
+/** INTERNAL FUNCTION DO NOT USE DIRECTLY,  used to help give a default option string if one is not provided*/
 export function defaultOptionString() {
     return '$$%>';
 }
 
+
+/** this function encrypts a given string, adds a pepper and then encrypts the string again. This should select a "seeded" random encryption key from the supplied encryption key groups.
+ * @keyType denotes whether or not key group A or B should be utilized
+ * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
+*/
 export function encryptText(inputData: string, keyType: boolean, option?: string) {
     const optionVar = (option ?? defaultOptionString())
     const encrypt1 = CryptoJS.AES.encrypt(inputData, getEncryptionKey(1, keyType, optionVar)).toString();
@@ -81,6 +88,10 @@ export function encryptText(inputData: string, keyType: boolean, option?: string
     return encrypt;
 }
 
+/** this function decrypts a string value encrypted by this library. The same options passed should be supplied here as passed when using the encrypted data function.
+ * @keyType denotes whether or not key group A or B should be utilized
+ * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
+*/
 export function decryptData(cipherText: string, keyType: boolean, option?: string) {
     const optionVar = (option ?? defaultOptionString());
     const bytes1 = CryptoJS.AES.decrypt(cipherText, getEncryptionKey(2, keyType, optionVar)).toString(CryptoJS.enc.Utf8);
@@ -89,7 +100,11 @@ export function decryptData(cipherText: string, keyType: boolean, option?: strin
     return bytes.replace(optionVar, "");
 }
 
-
+/** this function encrypts any arbitrary JavaScript object. 
+ * @Note not all data types will work for object values. Accepted values: string | number | boolean | undefined | null
+ * @keyType denotes whether or not key group A or B should be utilized
+ * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
+ */
 export function encryptObjectData(data: { [key: string | number]: string | number | boolean | undefined | null }, keyType: boolean, optString?: string) {
     const opt = optString ?? "";
     const keys = Object.keys(data)
@@ -98,6 +113,11 @@ export function encryptObjectData(data: { [key: string | number]: string | numbe
 }
 
 
+/** this function decrypts any arbitrary JavaScript object. 
+ * @Note not all data types will work for object values. Accepted values: string | number | boolean | undefined | null
+ * @keyType denotes whether or not key group A or B should be utilized
+ * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
+ */
 export function decryptObject(encryptedData: { [key: string | number]: string | number | boolean | undefined | null }, keyType: boolean, optString?: string) {
     const opt = optString ?? "";
     const keys = Object.keys(encryptedData)

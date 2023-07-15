@@ -1,6 +1,6 @@
 import hash from 'object-hash'
 import bcrypt from 'bcrypt';
-import { compareHash, getSaltRounds, hashData, insertPepper } from '../src/hash'
+import { compareHash, getSaltRounds, hashData, insertHashPepper } from '../src/hash'
 
 describe('Test Hash Functions', () => {
     const OLD_ENV = process.env;
@@ -27,7 +27,7 @@ describe('Test Hash Functions', () => {
     it('insertPepper', () => {
         const hashString = "test", dataType = 8;
         const unPepperString = hash(hashString + hashString + dataType);
-        const pepperString = insertPepper(hashString, dataType);
+        const pepperString = insertHashPepper(hashString, dataType);
         expect(unPepperString).not.toBe(pepperString);
         expect(unPepperString.length === pepperString.length).toBeFalsy();
     })
