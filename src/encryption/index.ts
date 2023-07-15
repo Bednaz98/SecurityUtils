@@ -105,11 +105,11 @@ export function decryptData(cipherText: string, keyType: boolean, option?: strin
  * @keyType denotes whether or not key group A or B should be utilized
  * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
  */
-export function encryptObjectData(data: { [key: string | number]: string | number | boolean | undefined | null }, keyType: boolean, optString?: string) {
+export function encryptObjectData(data: { [key: string | number]: string | number | boolean | undefined | null }, keyType: boolean, optString?: string): { [key: string]: string } {
     const opt = optString ?? "";
     const keys = Object.keys(data)
     const values = Object.values(data).map((e, i) => encryptText(String(e), keyType, (opt + keys[i])))
-    return keys.reduce((o, k, i) => ({ ...o, [k]: values[i] }), {})
+    return keys.reduce((o, k, i) => ({ ...o, [k]: values[i] }), {} as { [key: string]: string })
 }
 
 
@@ -118,7 +118,7 @@ export function encryptObjectData(data: { [key: string | number]: string | numbe
  * @keyType denotes whether or not key group A or B should be utilized
  * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
  */
-export function decryptObject(encryptedData: { [key: string | number]: string | number | boolean | undefined | null }, keyType: boolean, optString?: string) {
+export function decryptObject<T = ({ [key: string]: string | number | boolean | undefined | null })>(encryptedData: { [key: string | number]: string | number | boolean | undefined | null }, keyType: boolean, optString?: string): T {
     const opt = optString ?? "";
     const keys = Object.keys(encryptedData)
     const values: any[] = Object.values(encryptedData);
@@ -131,7 +131,7 @@ export function decryptObject(encryptedData: { [key: string | number]: string | 
         else if (data === "null") return null
         else return data
     })
-    const reduced: any = keys.reduce((o, k, i) => ({ ...o, [k]: decryptValues[i] }), {})
+    const reduced: any = keys.reduce((o, k, i) => ({ ...o, [k]: decryptValues[i] }), {} as T)
 
     return reduced
 }
