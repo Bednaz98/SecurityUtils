@@ -164,8 +164,14 @@ export function decryptObject<T = ({ [key: string]: string | number | boolean | 
 export function rotateEncryptionDataAB(encryptedData: string, transitionType: boolean, option?: string) {
     const fetchIndex = !transitionType ? 0 : 1
     const switchIndex = !transitionType ? 1 : 2
-    const temp = decryptData(encryptedData, fetchIndex, option);
-    return encryptText(temp, switchIndex, option);
+    try {
+        const temp = decryptData(encryptedData, fetchIndex, option);
+        return encryptText(temp, switchIndex, option);
+    } catch (error) {
+        console.error(error)
+        return null
+    }
+
 }
 
 export function encryptRotationText(inputData: string, keyType: boolean, option?: string) {

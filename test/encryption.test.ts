@@ -87,16 +87,23 @@ describe('encryption test', () => {
     it("rotateEncryptionDataAB", () => {
         const testData = 'testing';
         const initEncrypt = encryptText(testData, 0)
-        const rotation = rotateEncryptionDataAB(initEncrypt, false)
+        const rotation = rotateEncryptionDataAB(initEncrypt, false) ?? ''
         expect(initEncrypt).not.toBe(rotation)
         expect(decryptData(rotation, 1)).toBe(testData)
     })
     it("rotateEncryptionDataBC", () => {
         const testData = 'testing';
         const initEncrypt = encryptText(testData, 1)
-        const rotation = rotateEncryptionDataAB(initEncrypt, true)
+        const rotation = rotateEncryptionDataAB(initEncrypt, true) ?? ''
         expect(initEncrypt).not.toBe(rotation)
         expect(decryptData(rotation, 2)).toBe(testData)
+    })
+    it("rotateEncryptionData failed", () => {
+        const testData = 'testing';
+        const initEncrypt = encryptText(testData, 2)
+        const rotation = rotateEncryptionDataAB(initEncrypt, true)
+        expect(initEncrypt).not.toBe(rotation)
+        expect(rotation).toBeNull();
     })
 
     it('getEncryptionCheckString undefine', () => {

@@ -49,6 +49,6 @@ describe('Encryption Rotation', () => {
         expect(testString2).not.toBe(testString1)
         expect(decryptRotationText(testString1)).toBeUndefined()
         expect(decryptRotationText(testString2)).toBeUndefined()
-    })
+    });
 
 })

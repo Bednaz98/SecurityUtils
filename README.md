@@ -1,5 +1,5 @@
 # SecurityUtils
-This is a utility package that combines using 'bcrypt' 'crypto-js', 'jsonwebtoken' and 'object-hash' for storing information in a data base either by hash or encryption.
+This is a utility package that combines using 'bcrypt' 'crypto-js', 'jsonwebtoken' and 'object-hash' for storing information in a data base either by hash or encryption. It also supports the rotation of encryption to maintain compatibility when performing security key rotation.
 
 
 # Overview
@@ -14,6 +14,7 @@ This library is meant to be a "plug and play" solution for handing data encrypti
  - SERVER_JWT_KEY#                      (See notes below)
  - SERVER_ENCRYPTION_A#                 (See notes below)
  - SERVER_ENCRYPTION_B#                 (See notes below)
+ - SERVER_ENCRYPT_CHECK                 (See notes below)
 
  All functions in this library are exported for use but some are marked as "INTERNAL FUNCTION DO NOT USE DIRECTLY" in the intellisense. It is not recommended to use these functions unless there is a specific use case or a customized function is needed that follow simple design patterns. These function have comments in the source but no further documentation will be provided.
 
@@ -34,6 +35,8 @@ When passing data to the hash function, it will first hash the data, then add a 
 ## JWT
 Any generic JWT can be generated. This library has default functions for generically making refresh and access tokens.
 
+## SERVER_ENCRYPT_CHECK
+This value is used to help check if values where encrypted using either encryption key group A or B. Default value: '|$$%12345|>'
 
 # Example use cases
 
@@ -76,6 +79,65 @@ const decryptedObject = decryptObject(encryptedObject,true, option)
 console.log(decryptedObject) // should be the same as above
 
 ```
+
+## Rotating encryption keys
+The methodology is to have three sets of keys what get rotated out on a regular schedule. The exact frequency and changing of server environment variables is up to the developer. Provided are three functions to assist in this.
+
+Steps: 
+- 1: have encryption key groups A, B, C configured
+    - Group C is not in use until the rotation period
+- 2: when expected, convert all encrypted data from using group B -> A, then C -> B
+- 3: set new values for C, repeat
+
+The keys can be recycled, but this is not recommended. Ideally the keys would be randomly generated for each new months group of keys being rotated in.
+
+### example:
+Month 1:
+ - A: ["M1A1", "M1A2", .... "M1AN"] 
+ - B: ["M1B1", "M1B2", .... "M1BN"] 
+ - C: ["M1C1", "M1C2", .... "M1CN"]
+
+Month 2: 
+ - A: ["M1B1", "M1B2", .... "M1BN"] 
+ - B: ["M1C1", "M1C2", .... "M1CN"]
+ - C: ["M2C1", "M2C2", .... "M2CN"]
+
+Month 3:
+ - A: ["M1C1", "M1C2", .... "M1CN"]
+ - B: ["M2C1", "M2C2", .... "M2CN"]
+ - C: ["M3C1", "M3C2", .... "M3CN"]
+
+```TypeScript
+import  {rotateEncryptionDataAB, encryptRotationText, decryptRotationText} from '@jabz/security-utils'
+// when encrypting to data base use this encryption function
+const cipherText= 'yourData', option='optString'
+const initialData =encryptRotationText(cipherText, option)
+// .. store this value
+
+// when reading the data
+
+const encryptedDBData = /* your logical for getting the data from a function*/;
+const option='optString'
+// returns a valid string, return undefine if rotated was unsuccessful
+const decryptedText = decryptRotationText(encryptedDBData,option);
+
+
+
+// when rotating data do the following
+
+const encryptedData = [] // your logic from the database
+const newDataWithA = rotateEncryptionDataAB(encryptedData, false) // rotates A -> B
+const newDataWithB = rotateEncryptionDataAB(encryptedData, true)  // rotates B -> c
+// since the data can be from group A or B, 'rotateEncryptionDataAB' will return null on values that can't be rotated from one group to another.
+// simply filter all the null values before storing in your DB
+const allNewData = [... newDataWithA.filter((e)=>e!==null), ... newDataWithB.filter((e)=>e!==null)]
+// ... logic to store new values
+
+
+```
+
+
+
 
 ## Hash (for passwords)
  
