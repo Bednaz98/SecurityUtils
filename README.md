@@ -11,7 +11,7 @@ This library is meant to be a "plug and play" solution for handing data encrypti
  - SERVER_GENERIC_USER_REFRESH_TIME     (integer)
  - SERVER_GENERIC_USER_ACCESS_TIME      (integer)
  - SERVER_JWT_ISSUER                    (optional string, default value: 'default')
- - SERVER_JWT_KEY#                      (See notes below) (group A/B implementation is pending in 2.x)
+ - SERVER_JWT_KEY#                      (See notes below)
  - SERVER_ENCRYPTION_A#                 (See notes below)
  - SERVER_ENCRYPTION_B#                 (See notes below)
 

@@ -5,15 +5,20 @@ import { convertStringToNumber } from '../common/utilities';
 
 let encryptionKeysA: string[] = [];
 let encryptionKeysB: string[] = [];
+let encryptionKeysC: string[] = [];
+
 
 /** INTERNAL FUNCTION DO NOT USE DIRECTLY, this functions returns an array of the encryption keys on the server */
-export function getEncryptionKeyArray(type: boolean): string[] {
-    return type ? encryptionKeysB : encryptionKeysA;
+export function getEncryptionKeyArray(type: boolean | 0 | 1 | 2): string[] {
+    if (type === 2) return encryptionKeysC
+    return !!type ? encryptionKeysB : encryptionKeysA;
 }
 /** INTERNAL FUNCTION DO NOT USE DIRECTLY,  clears the keys at run time*/
-export function clearKeys() {
-    encryptionKeysA = []
-    encryptionKeysB = []
+export function resetKeys() {
+    encryptionKeysA = [];
+    encryptionKeysB = [];
+    encryptionKeysC = [];
+    initEncryptionKeys();
 }
 
 /** INTERNAL FUNCTION DO NOT USE DIRECTLY,  this function initializes the getting the encryption key array*/
@@ -44,10 +49,29 @@ export function initEncryptionKeys() {
         encryptionKeysB.push('defaultB2');
     }
 
+    if (encryptionKeysC.length < 2) {
+        for (let i = 0; i < 100; i++) {
+            const key = process.env[`SERVER_ENCRYPTION_C${i}`];
+            if (!!key) {
+                encryptionKeysC.push(key);
+            }
+        }
+    }
+    if (encryptionKeysC.length < 2) {
+        encryptionKeysC.push('defaultC1');
+        encryptionKeysC.push('defaultC2');
+    }
+
+}
+
+
+/** INTERNAL FUNCTION DO NOT USE DIRECTLY, used to get the encryption check string*/
+export function getEncryptionCheckString(): string {
+    return hash(process.env[`SERVER_ENCRYPT_CHECK`] ?? '|$$%12345|>');
 }
 
 /** INTERNAL FUNCTION DO NOT USE DIRECTLY,  returns the hash value of the input */
-export function getEncryptionKey(number: number, keyType: boolean, varString: string) {
+export function getEncryptionKey(number: number, keyType: boolean | 0 | 1 | 2, varString: string) {
     initEncryptionKeys();
     const encryptionKeys = getEncryptionKeyArray(keyType)
     const index1 = convertStringToNumber(hash(varString + varString));
@@ -56,13 +80,15 @@ export function getEncryptionKey(number: number, keyType: boolean, varString: st
     const stringB = encryptionKeys[(number + index2) % encryptionKeys.length]
     const hashA = hash(stringA)
     const hashB = hash(stringB)
+    let resultKey = '';
     switch (number % 5) {
-        case 0: return hash(hashA + hashB) + hash(hashA + hashB + varString) + hash(hash(hashA + hashB) + hash(hashA + hashB + varString));
-        case 1: return hash(hashB + hashA + varString) + hash(varString + hashA + hashB) + hash(hash(hashB + hashA + varString) + hash(varString + hashA + hashB));
-        case 3: return hash(hashB + varString) + hash(hashA + varString) + hash(hash(hashB + varString) + hash(hashA + varString));
-        case 4: return hash(varString + hashA) + hash(varString + hashB) + hash(hash(varString + hashA) + hash(varString + hashB));
-        default: return hash(hashB + varString + hashA) + hash(hashA + varString + hashB) + hash(hash(hashB + varString + hashA) + hash(hashA + varString + hashB));
+        case 0: { resultKey = hash(hashA + hashB) + hash(hashA + hashB + varString) + hash(hash(hashA + hashB) + hash(hashA + hashB + varString)); break }
+        case 1: { resultKey = hash(hashB + hashA + varString) + hash(varString + hashA + hashB) + hash(hash(hashB + hashA + varString) + hash(varString + hashA + hashB)); break }
+        case 3: { resultKey = hash(hashB + varString) + hash(hashA + varString) + hash(hash(hashB + varString) + hash(hashA + varString)); break }
+        case 4: { resultKey = hash(varString + hashA) + hash(varString + hashB) + hash(hash(varString + hashA) + hash(varString + hashB)); break }
+        default: { resultKey = hash(hashB + varString + hashA) + hash(hashA + varString + hashB) + hash(hash(hashB + varString + hashA) + hash(hashA + varString + hashB)); break }
     }
+    return resultKey;
 }
 
 /** INTERNAL FUNCTION DO NOT USE DIRECTLY,  gets a single character string from the pepper array*/
@@ -80,7 +106,7 @@ export function defaultOptionString() {
  * @keyType denotes whether or not key group A or B should be utilized
  * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
 */
-export function encryptText(inputData: string, keyType: boolean, option?: string) {
+export function encryptText(inputData: string, keyType: boolean | 0 | 1 | 2, option?: string) {
     const optionVar = (option ?? defaultOptionString())
     const encrypt1 = CryptoJS.AES.encrypt(inputData, getEncryptionKey(1, keyType, optionVar)).toString();
     const inertString = insertPepper(encrypt1, getPepper(convertStringToNumber(hash(getPepperString() + option))), option);
@@ -92,7 +118,7 @@ export function encryptText(inputData: string, keyType: boolean, option?: string
  * @keyType denotes whether or not key group A or B should be utilized
  * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
 */
-export function decryptData(cipherText: string, keyType: boolean, option?: string) {
+export function decryptData(cipherText: string, keyType: boolean | 0 | 1 | 2, option?: string) {
     const optionVar = (option ?? defaultOptionString());
     const bytes1 = CryptoJS.AES.decrypt(cipherText, getEncryptionKey(2, keyType, optionVar)).toString(CryptoJS.enc.Utf8);
     const removeString = removePepper(bytes1, getPepper(convertStringToNumber(hash(getPepperString() + option))), option)
@@ -132,6 +158,30 @@ export function decryptObject<T = ({ [key: string]: string | number | boolean | 
     })
     const reduced: any = keys.reduce((o, k, i) => ({ ...o, [k]: decryptValues[i] }), {} as T)
     return reduced;
+}
+
+
+export function rotateEncryptionDataAB(encryptedData: string, transitionType: boolean, option?: string) {
+    const fetchIndex = !transitionType ? 0 : 1
+    const switchIndex = !transitionType ? 1 : 2
+    const temp = decryptData(encryptedData, fetchIndex, option);
+    return encryptText(temp, switchIndex, option);
+}
+
+export function encryptRotationText(inputData: string, keyType: boolean, option?: string) {
+    return encryptText(`${inputData}${getEncryptionCheckString()}`, keyType, option)
+
+}
+
+
+export function decryptRotationText(cipherText: string, option?: string): string | undefined {
+    let check1: string = '';
+    try { check1 = decryptData(cipherText, true, option) } catch (error) { console.log(error) }
+    if (check1.includes(getEncryptionCheckString())) return check1.replace(getEncryptionCheckString(), '');
+    let check2: string = '';
+
+    try { check2 = decryptData(cipherText, false, option) } catch (error) { console.log(error) }
+    if (check2.includes(getEncryptionCheckString())) return check2.replace(getEncryptionCheckString(), '');
 }
 
 
