@@ -184,10 +184,10 @@ export function encryptRotationText(inputData: string, keyType: boolean, option?
 
 export function decryptRotationText(cipherText: string, option?: string): string | undefined {
     let check1: string = '';
-    try { check1 = decryptData(cipherText, true, option) } catch (error) { expectedWarning(); console.debug(JSON.stringify(error)) }
+    try { check1 = decryptData(cipherText, true, option) } catch (error) { expectedWarning(); console.info(JSON.stringify(error)) }
     if (check1.includes(getEncryptionCheckString())) return check1.replace(getEncryptionCheckString(), '');
     let check2: string = '';
-    try { check2 = decryptData(cipherText, false, option) } catch (error) { expectedWarning(); console.debug(JSON.stringify(error)) }
+    try { check2 = decryptData(cipherText, false, option) } catch (error) { expectedWarning(); console.info(JSON.stringify(error)) }
     if (check2.includes(getEncryptionCheckString())) return check2.replace(getEncryptionCheckString(), '');
 }
 
