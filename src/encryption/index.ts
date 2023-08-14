@@ -160,6 +160,7 @@ export function decryptObject<T = ({ [key: string]: string | number | boolean | 
     return reduced;
 }
 
+const expectedWarning = () => console.warn("if the following error is due to an invalid string, ignore it, this is because the encryption function failed with the data could not be decrypted. This is expected behavior")
 
 export function rotateEncryptionDataAB(encryptedData: string, transitionType: boolean, option?: string) {
     const fetchIndex = !transitionType ? 0 : 1
@@ -168,7 +169,8 @@ export function rotateEncryptionDataAB(encryptedData: string, transitionType: bo
         const temp = decryptData(encryptedData, fetchIndex, option);
         return encryptText(temp, switchIndex, option);
     } catch (error) {
-        console.error(error)
+        expectedWarning()
+        console.warn(error)
         return null
     }
 
@@ -182,11 +184,10 @@ export function encryptRotationText(inputData: string, keyType: boolean, option?
 
 export function decryptRotationText(cipherText: string, option?: string): string | undefined {
     let check1: string = '';
-    try { check1 = decryptData(cipherText, true, option) } catch (error) { console.log(error) }
+    try { check1 = decryptData(cipherText, true, option) } catch (error) { expectedWarning(); console.warn(error) }
     if (check1.includes(getEncryptionCheckString())) return check1.replace(getEncryptionCheckString(), '');
     let check2: string = '';
-
-    try { check2 = decryptData(cipherText, false, option) } catch (error) { console.log(error) }
+    try { check2 = decryptData(cipherText, false, option) } catch (error) { expectedWarning(); console.warn(error) }
     if (check2.includes(getEncryptionCheckString())) return check2.replace(getEncryptionCheckString(), '');
 }
 
