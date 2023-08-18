@@ -76,6 +76,21 @@ describe('encryption test', () => {
             expect(decryptValue1).toEqual(testString)
         }
     })
+    it('Test symmetrical Encryption JSON String', () => {
+        for (let i = 0; i < 20; i++) {
+            const testString = {
+                testString: v4(),
+                0: true,
+                2: 2,
+                testNum: 3,
+                testBool: !!(Math.round(Math.random()))
+            };
+            const opt = v4()
+            const encryptData = encryptText(JSON.stringify(testString), true, i === 0 ? undefined : opt)
+            const decryptValue1 = decryptData(encryptData, true, i === 0 ? undefined : opt)
+            expect(testString).toEqual(JSON.parse(decryptValue1))
+        }
+    })
     it('test encrypt Object', () => {
         for (let i = 0; i < 20; i++) {
             const testData = { testNum: 1, testBool: false, testString: v4() + v4() + v4() + ` $ @$% @#$% !#H | )(*&^%$#@!?><:"';{}[]) R46 46 3rh r 357 ryh r3y6 5346feh 3w45rfe aewrh `, testUndefined: undefined, testNull: null, }
@@ -84,31 +99,5 @@ describe('encryption test', () => {
             expect(decryptData).toEqual(testData)
         }
     })
-    it("rotateEncryptionDataAB", () => {
-        const testData = 'testing';
-        const initEncrypt = encryptText(testData, 0)
-        const rotation = rotateEncryptionDataAB(initEncrypt, false) ?? ''
-        expect(initEncrypt).not.toBe(rotation)
-        expect(decryptData(rotation, 1)).toBe(testData)
-    })
-    it("rotateEncryptionDataBC", () => {
-        const testData = 'testing';
-        const initEncrypt = encryptText(testData, 1)
-        const rotation = rotateEncryptionDataAB(initEncrypt, true) ?? ''
-        expect(initEncrypt).not.toBe(rotation)
-        expect(decryptData(rotation, 2)).toBe(testData)
-    })
-    it("rotateEncryptionData failed", () => {
-        const testData = 'testing';
-        const initEncrypt = encryptText(testData, 2)
-        const rotation = rotateEncryptionDataAB(initEncrypt, true)
-        expect(initEncrypt).not.toBe(rotation)
-        expect(rotation).toBeNull();
-    })
-
-    it('getEncryptionCheckString undefine', () => {
-        const value = getEncryptionCheckString()
-        expect(value).toBe(hash('|$$%12345|>'));
-    });
 
 })

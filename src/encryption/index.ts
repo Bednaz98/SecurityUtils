@@ -167,7 +167,8 @@ export function rotateEncryptionDataAB(encryptedData: string, transitionType: bo
     const switchIndex = !transitionType ? 1 : 2
     try {
         const temp = decryptData(encryptedData, fetchIndex, option);
-        return encryptText(temp, switchIndex, option);
+        if (temp.includes(getEncryptionCheckString())) return encryptText(temp, switchIndex, option).replace(getEncryptionCheckString(), "");
+        return null
     } catch (error) {
         expectedWarning()
         console.warn(JSON.stringify(error))

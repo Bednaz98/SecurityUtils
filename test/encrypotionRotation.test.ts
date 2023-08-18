@@ -1,4 +1,4 @@
-import { decryptRotationText, encryptRotationText, resetKeys } from "../src/encryption";
+import { decryptRotationText, encryptRotationText, getEncryptionCheckString, resetKeys } from "../src/encryption";
 
 describe('Encryption Rotation', () => {
     const OLD_ENV = process.env;
@@ -24,11 +24,14 @@ describe('Encryption Rotation', () => {
         process.env = OLD_ENV;
     });
     it("test rotation encryption initial", () => {
-        testString1 = encryptRotationText(DataString, false);
-        testString2 = encryptRotationText(DataString, true);
-        expect(testString2).not.toBe(testString1)
-        expect(decryptRotationText(testString1)).toBe(DataString)
-        expect(decryptRotationText(testString2)).toBe(DataString)
+        for (let i = 0; i < 20; i++) {
+            testString1 = encryptRotationText(DataString + i, false);
+            testString2 = encryptRotationText(DataString + i, true);
+            expect(testString2).not.toBe(testString1)
+            expect(decryptRotationText(testString1)).toBe(DataString + i)
+            expect(decryptRotationText(testString2)).toBe(DataString + i)
+        }
+
     })
     it("test rotation encryption round 1", () => {
         process.env.SERVER_ENCRYPTION_A1 = testB1;
