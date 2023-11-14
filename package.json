@@ -1,6 +1,6 @@
 {
   "name": "@jabz/security-utils",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "This is a utility package that combines using, 'dotenv' 'bcrypt' 'crypto-js', 'jsonwebtoken' and 'object-hash' for storing information in a data base either by hash or encryption.",
   "main": "./lib/index.js",
   "files": [
@@ -15,7 +15,7 @@
     "increment": "npm version patch",
     "lint-fix": "eslint --fix",
     "build": "tsc -b",
-    "pr-test": "npm run test",
+    "pr-test": "npm run test && lint-fix",
     "test-pack": "npm i && npm run build && npm pack"
   },
   "author": "Joshua Bednaz",
@@ -23,16 +23,11 @@
   "dependencies": {
     "bcrypt": "^5.1.0",
     "crypto-js": "^4.1.1",
-    "dotenv": "^16.0.3",
     "jsonwebtoken": "^9.0.0",
     "object-hash": "^3.0.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.61.0",
-    "@typescript-eslint/parser": "^5.61.0",
-    "eslint": "^8.44.0",
-    "typescript": "^5.1.6",
     "@babel/preset-env": "^7.22.5",
     "@babel/preset-typescript": "^7.22.5",
     "@jest/globals": "^29.5.0",
@@ -43,9 +38,14 @@
     "@types/node": "^20.3.1",
     "@types/object-hash": "^3.0.2",
     "@types/uuid": "^9.0.1",
-    "ts-node": "^10.9.1",
+    "@typescript-eslint/eslint-plugin": "^5.61.0",
+    "@typescript-eslint/parser": "^5.61.0",
+    "dotenv": "^16.0.3",
+    "eslint": "^8.44.0",
     "jest": "^29.5.0",
-    "ts-jest": "^29.1.0"
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
   },
   "repository": {
     "type": "git",

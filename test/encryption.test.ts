@@ -1,7 +1,41 @@
 import { v4 } from "uuid";
-import { resetKeys, decryptData, decryptObject, decryptRotationText, defaultOptionString, encryptObjectData, encryptRotationText, encryptText, getEncryptionKey, getEncryptionKeyArray, getEncryptionPepper, rotateEncryptionDataAB, getEncryptionCheckString } from '../src/encryption'
-import hash from 'object-hash';
+import EncryptionManager, { decryptData, decryptObject, defaultOptionString, encryptObjectData, encryptText, getEncryptionKey, getEncryptionKeyArray, getEncryptionPepper, NEncryption, NDecryption, singleEncryption, singleDecrypt } from '../src/encryption'
+import { keyGroups } from "../src/common/types";
 
+const keyGroup: keyGroups = {
+    0: [v4(), v4(), v4()],
+    1: [v4(), v4(), v4()],
+    2: [v4(), v4(), v4()],
+    3: [v4(), v4(), v4()],
+    4: [v4(), v4(), v4()]
+}
+describe('Encryption key functions', () => {
+    it('getEncryptionKey', () => {
+
+        for (let i = 0; i < 10; i++) {
+            //@ts-ignore
+            const valueA: 0 | 1 | 2 = (i % 3)
+            //@ts-ignore
+            const valueB: 0 | 1 | 2 = (i + 2 % 3)
+            const rand = v4()
+            const initialKeyA1 = getEncryptionKey(keyGroup, i, valueA, rand)
+            const initialKeyA2 = getEncryptionKey(keyGroup, 20, valueB, rand)
+            expect(initialKeyA1).not.toBe(initialKeyA2)
+        }
+
+
+    })
+    it("defaultOptionString", () => {
+        const result = defaultOptionString()
+        expect(typeof result === "string").toBeTruthy()
+    })
+    it('getEncryptionPepper', () => {
+        for (let i = 0; i < 20; i++) {
+            const result = getEncryptionPepper(i)
+            expect(result.length).toBe(1)
+        }
+    })
+})
 
 describe('encryption test', () => {
     const OLD_ENV = process.env;
@@ -14,65 +48,26 @@ describe('encryption test', () => {
         process.env = OLD_ENV;
     });
 
+    const encryptionClass = new EncryptionManager(() => keyGroup)
 
-    it("defaultOptionString", () => {
-        const result = defaultOptionString()
-        expect(typeof result === "string").toBeTruthy()
-    })
-    const undefinedKeys = "9a4b5bdf0f0c0abb07c0cceb97debe50a3a855849a4b5bdf0f0c0abb07c0cceb97debe50a3a85584050d9837e2d8faaa6adc770f22f815d00df13f97";
-    it('getEncryptionKey, no valid keys', () => {
-        const number = 8, varString = "desfhj"
-        const resultKey = getEncryptionKey(number, true, varString)
-        expect(resultKey).toBe(undefinedKeys)
-    })
-    it("", () => {
 
-    });
-    const testA1 = "testA!", testA2 = "testA2", testB1 = "testB1", testB2 = "testB2", testC1 = "testC1", testC2 = "testC2"
-    it('getEncryptionKey, valid keys', () => {
-        const number = 8, varString = "desfhj";
-        process.env.SERVER_ENCRYPTION_A1 = testA1;
-        process.env.SERVER_ENCRYPTION_A2 = testA2;
-        process.env.SERVER_ENCRYPTION_B1 = testB1;
-        process.env.SERVER_ENCRYPTION_B2 = testB2;
-        process.env.SERVER_ENCRYPTION_C1 = testC1;
-        process.env.SERVER_ENCRYPTION_C2 = testC2;
-        resetKeys();
+    const randomString = () => v4() + v4() + v4() + `${Math.random()}` + `!@#$%^&*()_+=-09876543321~|{}[];:?/><,. \n$ @$% @#$% !#H R46 46 3rh r 357 \tryh r3y6 5346feh 3w45rfe aewrh `
+    it("Test Single Encryption", () => {
+        const inputText = randomString();
+        const key = 0
+        const opt = undefined
+        const varNum = 0
+        const encrypt = encryptionClass.singleEncryption(inputText, varNum, key, opt)
+        const decrypt = encryptionClass.singleDecrypt(encrypt, varNum, key, opt)
+        expect(decrypt).toEqual(inputText)
 
-        const resultKeyA = getEncryptionKey(number, true, varString)
-        const newKey = "57931c74c0957de7c315390fd2347af9bb97916457931c74c0957de7c315390fd2347af9bb97916427ca4cc807f83621adb53b531bbad83910eaaa38";
-        expect(resultKeyA).not.toBe(undefinedKeys)
-        expect(resultKeyA).toBe(newKey)
-        for (let i = 0; i < 20; i++) {
-            expect(getEncryptionKey(i, true, v4())).not.toBe(newKey)
-        }
-    })
-    it('getEncryptionKeyArray', () => {
-        const AKeys = getEncryptionKeyArray(false);
-        const BKeys = getEncryptionKeyArray(true);
-        const CKeys = getEncryptionKeyArray(2);
-        expect(AKeys).not.toEqual(BKeys);
-        expect(CKeys).not.toEqual(BKeys);
-        expect(CKeys).not.toEqual(AKeys);
-        expect(AKeys?.length).toBeGreaterThan(0);
-        expect(BKeys?.length).toBeGreaterThan(0);
-        expect(CKeys?.length).toBeGreaterThan(0);
-        expect(AKeys.includes(testA1) && AKeys.includes(testA2)).toBeTruthy();
-        expect(BKeys.includes(testB1) && BKeys.includes(testB2)).toBeTruthy();
-        expect(CKeys.includes(testC1) && CKeys.includes(testC2)).toBeTruthy();
-    })
-    it('getEncryptionPepper', () => {
-        for (let i = 0; i < 20; i++) {
-            const result = getEncryptionPepper(i)
-            expect(result.length).toBe(1)
-        }
     })
     it('Test symmetrical Encryption', () => {
         for (let i = 0; i < 20; i++) {
-            const testString = v4() + v4() + v4() + `!@#$%^&*()_+=-09876543321~|{}[];:?/><,. $ @$% @#$% !#H R46 46 3rh r 357 ryh r3y6 5346feh 3w45rfe aewrh `;
+            const testString = randomString();
             const opt = v4()
-            const encryptData = encryptText(testString, true, i === 0 ? undefined : opt)
-            const decryptValue1 = decryptData(encryptData, true, i === 0 ? undefined : opt)
+            const encryptData = encryptionClass.encryptText(testString, i, i === 0 ? undefined : opt)
+            const decryptValue1 = encryptionClass.decryptData(encryptData, i, i === 0 ? undefined : opt)
             expect(decryptValue1).toEqual(testString)
         }
     })
@@ -86,8 +81,8 @@ describe('encryption test', () => {
                 testBool: !!(Math.round(Math.random()))
             };
             const opt = v4()
-            const encryptData = encryptText(JSON.stringify(testString), true, i === 0 ? undefined : opt)
-            const decryptValue1 = decryptData(encryptData, true, i === 0 ? undefined : opt)
+            const encryptData = encryptionClass.encryptText(JSON.stringify(testString), i, i === 0 ? undefined : opt)
+            const decryptValue1 = encryptionClass.decryptData(encryptData, i, i === 0 ? undefined : opt)
             expect(testString).toEqual(JSON.parse(decryptValue1))
         }
     })
@@ -95,9 +90,21 @@ describe('encryption test', () => {
         for (let i = 0; i < 20; i++) {
             const testData = { testNum: 1, testBool: false, testString: v4() + v4() + v4() + ` $ @$% @#$% !#H | )(*&^%$#@!?><:"';{}[]) R46 46 3rh r 357 ryh r3y6 5346feh 3w45rfe aewrh `, testUndefined: undefined, testNull: null, }
             const opt = v4()
-            const decryptData = decryptObject(encryptObjectData(testData, true, i === 0 ? undefined : opt), true, i === 0 ? undefined : opt)
+            const decryptData = encryptionClass.decryptObject(encryptionClass.encryptObjectData(testData, i, i === 0 ? undefined : opt), i, i === 0 ? undefined : opt)
             expect(decryptData).toEqual(testData)
         }
+    })
+
+    it("Test N Encryption", () => {
+        for (let i = 0; i < 20; i++) {
+            const inputText = randomString();
+            const opt = i ? `${i}` : undefined
+            const encrypt = encryptionClass.NEncryption(inputText, i, opt)
+            const decrypt = encryptionClass.NDecryption(encrypt, i, opt)
+            expect(decrypt).toEqual(inputText)
+
+        }
+
     })
 
 })

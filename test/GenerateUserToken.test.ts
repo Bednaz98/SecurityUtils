@@ -1,69 +1,17 @@
-import hash from 'object-hash'
-import { decodeJWT, deleteNoneUniqueJWTProperties, generateJWT, getIssuer, getJWTIndex, getJWTKey, verifyJWT } from '../src/jwt/JwtGeneration'
-import { JWTConfig } from '../src/jwt/types';
+import { JWTManagerConfig, deleteNoneUniqueJWTProperties } from '../src/jwt'
+import { v4 } from 'uuid';
+import JWTManager from '../src/jwt/jwtClass';
 
 describe('Generate JWT Test', () => {
-    const OLD_ENV = process.env;
-
-    beforeEach(() => {
-        jest.resetModules()
-        jest.clearAllMocks()
-        process.env = { ...OLD_ENV };
-    });
-
-    afterAll(() => {
-        process.env = OLD_ENV;
-    });
-
-    it('getIssuer valid keys', () => {
-        const test = "testing";
-        process.env.SERVER_JWT_ISSUER = test;
-        const result = getIssuer();
-        expect(result).toBe(test);
-
-    });
-    it('getIssuer no keys', () => {
-        process.env.SERVER_JWT_ISSUER = undefined;
-        const result = getIssuer();
-        expect(result).toBe('default');
-
-    });
-
-    it('getJWTKeys no key', () => {
-        delete process.env.SERVER_JWT_KEY1
-        delete process.env.SERVER_JWT_KEY2
-        delete process.env.SERVER_JWT_KEY3
-        // console.log(process.env)
-        const index = 4
-        const result1 = getJWTKey(index)
-        expect(result1).toBe(hash('default'))
-
-    })
-
-    it('getJWTKey valid keys', () => {
-        const key1 = 'test1', key2 = "346", key3 = 'wrayhuw';
-        const Array = ["default", key1, key2, key3]
-        process.env.SERVER_JWT_KEY1 = key1
-        process.env.SERVER_JWT_KEY2 = key2
-        process.env.SERVER_JWT_KEY3 = key3
-        const index = 4
-        const result1 = getJWTKey(index)
-        expect(result1).toBe(hash(Array[index % Array.length]))
-    });
-    it("Test getJWTIndex", () => {
-        const result1 = getJWTIndex(null)
-        expect(result1).toBe(0)
-        const result2 = getJWTIndex('dgjgde')
-        expect(result2).toBe(0)
-        const data = { test2: "test" }, config: JWTConfig = {
-            expireTime: 10,
-            subject: "afh",
-        }
-        const jwt = generateJWT(data, config)
-        const result3 = getJWTIndex(jwt)
-        expect(result3).toBe(1824)
-
-    })
+    const key1 = v4()
+    const key2 = v4()
+    const key3 = v4()
+    const config: JWTManagerConfig = {
+        getJWTKey: () => [key1, key2, key3],
+        issuer: 'test'
+    }
+    const jWTManager = new JWTManager(config)
+    const userID = "testUsert"
 
     it('Test decode and delete unique properties', () => {
 
@@ -71,25 +19,27 @@ describe('Generate JWT Test', () => {
         const subject2 = 'test2'
         const test1 = "test"
         const test2 = 5
-        const data1: any = {}, config1: JWTConfig = {
+        const data1: any = {
             expireTime: 10
         }
-        const data2: any = { test2 }, config2: JWTConfig = {
+        const data2: any = {
+            test2,
             expireTime: 10,
             subject: subject1,
         }
-        const data3: any = { test2, test1 }, config3: JWTConfig = {
+        const data3: any = {
+            test2, test1,
             expireTime: 10,
             subject: subject2,
             audience: "sfhsf"
         }
-        const jwt1 = generateJWT(data1, config1)
-        const jwt2 = generateJWT(data2, config2)
-        const jwt3 = generateJWT(data3, config3)
+        const jwt1 = jWTManager.generateJWT(data1)
+        const jwt2 = jWTManager.generateJWT(data2)
+        const jwt3 = jWTManager.generateJWT(data3)
 
-        const decodeResult1 = deleteNoneUniqueJWTProperties(decodeJWT<{}>(jwt1))
-        const decodeResult2 = deleteNoneUniqueJWTProperties(decodeJWT<any>(jwt2))
-        const decodeResult3 = deleteNoneUniqueJWTProperties(decodeJWT<any>(jwt3))
+        const decodeResult1 = deleteNoneUniqueJWTProperties(jWTManager.decodeJWT<{}>(jwt1))
+        const decodeResult2 = deleteNoneUniqueJWTProperties(jWTManager.decodeJWT<any>(jwt2))
+        const decodeResult3 = deleteNoneUniqueJWTProperties(jWTManager.decodeJWT<any>(jwt3))
         expect(decodeResult1).toEqual(data1)
         expect(decodeResult2).toEqual(data2)
         expect(decodeResult3).toEqual(data3)
@@ -97,14 +47,44 @@ describe('Generate JWT Test', () => {
     })
     it('verifyJWT normal checks', () => {
 
-        const data: any = { test2: "test" }, config: JWTConfig = {
+        const data: any = {
+            test2: "test",
             expireTime: 10,
-            subject: "afh",
+            subject: undefined,
+            audience: "test"
         }
-        const jwt = generateJWT(data, config)
-        const result1 = verifyJWT(jwt, undefined, data.subject)
+        const jwt = jWTManager.generateJWT(data)
+        const result1 = jWTManager.verifyJWT(jwt, data.audience, data.subject)
         expect(result1).toBeTruthy()
-        const result2 = verifyJWT('afhawf', undefined, data.subject)
+        const result2 = jWTManager.verifyJWT('afhawf', undefined, data.subject)
+        expect(result2).toBeFalsy()
+    })
+    it(' verify access JWT normal checks', () => {
+        const data: any = {
+            test2: "test",
+            expireTime: 10,
+            subject: "testing",
+            audience: "testing"
+        }
+        const jwt = jWTManager.generateAccessToken("testUser", data, data.audience)
+        const result1 = jWTManager.verifyJWT(jwt, data.audience, data.subject)
+        expect(result1).toBeTruthy()
+        const jwt2 = jWTManager.generateAccessToken("testUser", undefined, data.audience)
+        const result2 = jWTManager.verifyJWT(jwt2, undefined, "notValid")
+        expect(result2).toBeFalsy()
+    })
+    it(' verify refresh JWT normal checks', () => {
+        const data: any = {
+            test2: "test",
+            expireTime: 10,
+            subject: "testing",
+            audience: "testing"
+        }
+        const jwt = jWTManager.generateRefreshToken("testUser", data, data.audience)
+        const result1 = jWTManager.verifyJWT(jwt, data.audience, data.subject)
+        expect(result1).toBeTruthy()
+        const jwt2 = jWTManager.generateRefreshToken("testUser", undefined, data.audience)
+        const result2 = jWTManager.verifyJWT(jwt2, undefined, "notValid")
         expect(result2).toBeFalsy()
     })
 
