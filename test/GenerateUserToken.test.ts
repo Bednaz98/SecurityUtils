@@ -1,6 +1,6 @@
 import { JWTManagerConfig, deleteNoneUniqueJWTProperties } from '../src/jwt'
 import { v4 } from 'uuid';
-import JWTManager from '../src/jwt/jwtClass';
+import { JWTManager } from '../src/jwt/jwtClass';
 
 describe('Generate JWT Test', () => {
     const key1 = v4()
