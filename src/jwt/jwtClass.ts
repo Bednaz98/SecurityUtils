@@ -12,7 +12,7 @@ export interface JWTManagerConfig {
     refreshTokenValidTime?: number
 }
 
-export default class JWTManager {
+export class JWTManager {
     private getJWTKey: () => string[]
     private issuer: string
     private JWTConfig?: JWTConfig | undefined
