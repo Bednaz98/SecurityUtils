@@ -1,7 +1,7 @@
 
 import hash from 'object-hash'
 import { v4 } from 'uuid'
-import { getPepperString, getPepper, getInsertIndex, insertPepper, removePepper } from '../src/common/security-Utilties';
+import { getPepper, getInsertIndex, insertPepper, removePepper } from '../src/common/security-Utilties';
 
 
 describe('Security Utilities', () => {
@@ -14,18 +14,11 @@ describe('Security Utilities', () => {
     afterAll(() => {
         process.env = OLD_ENV;
     });
+    const pepperArray = ["test", "default", "other"]
 
-    it('test pepper string', () => {
-        process.env.SERVER_HASH_PEPPER_STRING = undefined;
-        const result1 = getPepperString();
-        expect(result1).toBe(hash('default'));
-        process.env.SERVER_HASH_PEPPER_STRING = 'test';
-        const result2 = getPepperString();
-        expect(result2).toBe(hash('test'));
-    })
     it('getPepper', () => {
-        const pepper = getPepper(0);
-        expect(pepper).toBe("4");
+        const pepper = getPepper(0, pepperArray);
+        expect(pepper).toBe("6");
     })
     it('getInsertIndex', () => {
 
@@ -58,7 +51,7 @@ describe('Security Utilities', () => {
 
         for (let i = 0; i < 20; i++) {
             const testString = v4()
-            const pepper = getPepper(i)
+            const pepper = getPepper(i, pepperArray)
             const pepperString = insertPepper(testString, pepper, `${i}`)
             const recoverString = removePepper(pepperString, pepper, `${i}`)
             expect(recoverString).toBe(testString)

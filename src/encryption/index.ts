@@ -1,55 +1,37 @@
 import CryptoJS from 'crypto-js'
 import hash from 'object-hash';
-import { getPepper, getPepperString, insertPepper, removePepper } from '../common/security-Utilties';
-import { convertStringToNumber } from '../common/utilities';
-import { keyGroups } from '../common/types';
+import { getPepper, hashAPIKey, insertPepper, removePepper } from '../common/security-Utilties';
+
+import { convertStringToNumber } from '@jabz/math-js';
 
 /** INTERNAL FUNCTION DO NOT USE DIRECTLY, this functions returns an array of the encryption keys on the server */
-export function getEncryptionKeyArray(type: number, keyGroup: keyGroups): string[] {
-    return keyGroup?.[type] ?? "default"
+export function getEncryptionKeyArray(type: string | number, encryptionStrings: string[]): string {
+    const index = convertStringToNumber(hash({ type }))
+    return encryptionStrings[index % encryptionStrings.length]
 }
 
 /** INTERNAL FUNCTION DO NOT USE DIRECTLY,  returns the hash value of the input */
-export function getEncryptionKey(keyGroup: keyGroups, number: number, keyType: number, varString: string) {
-
-    const encryptionKeys = getEncryptionKeyArray(keyType, keyGroup)
-    const index1 = convertStringToNumber(hash(varString + varString));
-    const index2 = convertStringToNumber(hash(varString));
-    const stringA = encryptionKeys[(number + index1) % encryptionKeys.length]
-    const stringB = encryptionKeys[(number + index2) % encryptionKeys.length]
-    const hashA = hash(stringA)
-    const hashB = hash(stringB)
-    let resultKey = '';
-    switch (number % 5) {
-        case 0: { resultKey = hash(hashA + hashB) + hash(hashA + hashB + varString) + hash(hash(hashA + hashB) + hash(hashA + hashB + varString)); break }
-        case 1: { resultKey = hash(hashB + hashA + varString) + hash(varString + hashA + hashB) + hash(hash(hashB + hashA + varString) + hash(varString + hashA + hashB)); break }
-        case 3: { resultKey = hash(hashB + varString) + hash(hashA + varString) + hash(hash(hashB + varString) + hash(hashA + varString)); break }
-        case 4: { resultKey = hash(varString + hashA) + hash(varString + hashB) + hash(hash(varString + hashA) + hash(varString + hashB)); break }
-        default: { resultKey = hash(hashB + varString + hashA) + hash(hashA + varString + hashB) + hash(hash(hashB + varString + hashA) + hash(hashA + varString + hashB)); break }
-    }
-    return resultKey;
+export function getEncryptionKey(encryptionStrings: string[], keyType: string | number, varString?: string | number) {
+    const hashA = getEncryptionKeyArray(keyType, encryptionStrings)
+    const hashB = getEncryptionKeyArray(keyType, encryptionStrings)
+    const hashC = getEncryptionKeyArray(keyType, encryptionStrings)
+    return JSON.stringify(hashAPIKey([hashA, hashB, hashC], `${keyType}${varString}`))
 }
 
 /** INTERNAL FUNCTION DO NOT USE DIRECTLY,  gets a single character string from the pepper array*/
-export function getEncryptionPepper(index: number) {
-    return getPepper(index + 3)
-}
-
-/** INTERNAL FUNCTION DO NOT USE DIRECTLY,  used to help give a default option string if one is not provided*/
-export function defaultOptionString() {
-    return '$$%>';
+export function getEncryptionPepper(index: number, pepperArray: string[]) {
+    return getPepper(index + 3, pepperArray)
 }
 
 
-export function singleEncryption(keyGroup: keyGroups, inputData: string, varNum: number, keyType: number, option?: string) {
-    const optionVar = (option ?? defaultOptionString())
-    const key = getEncryptionKey(keyGroup, varNum, keyType, optionVar)
+
+export function singleEncryption(encryptionStrings: string[], inputData: string, encryptVar: string | number, keyType?: string | number) {
+    const key = getEncryptionKey(encryptionStrings, encryptVar, keyType)
     const encrypt = CryptoJS.AES.encrypt(JSON.stringify({ inputData }), key).toString()
     return encrypt
 }
-export function singleDecrypt(keyGroup: keyGroups, cipherText: string, varNum: number, keyType: number, option?: string) {
-    const optionVar = (option ?? defaultOptionString());
-    const key = getEncryptionKey(keyGroup, varNum, keyType, optionVar)
+export function singleDecrypt(encryptionStrings: string[], cipherText: string, encryptVar: string | number, keyType?: string | number) {
+    const key = getEncryptionKey(encryptionStrings, encryptVar, keyType)
     const decryptData = CryptoJS.AES.decrypt(cipherText, key).toString(CryptoJS.enc.Utf8)
     return JSON.parse(decryptData).inputData
 }
@@ -59,10 +41,11 @@ export function singleDecrypt(keyGroup: keyGroups, cipherText: string, varNum: n
  * @keyType denotes whether or not key group A or B should be utilized
  * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
 */
-export function encryptText(keyGroup: keyGroups, inputData: string, keyType: number, option?: string) {
-    const encrypt1 = singleEncryption(keyGroup, inputData, 1, keyType, option)
-    const inertString = insertPepper(encrypt1, getPepper(convertStringToNumber(hash(getPepperString() + option))), option);
-    const encrypt = singleEncryption(keyGroup, inertString, 2, keyType, option)
+export function encryptText(encryptionStrings: string[], inputData: string, keyType: string | number, pepperStringArray: string[], option?: string) {
+    const encrypt1 = singleEncryption(encryptionStrings, inputData, `${keyType}1`, option)
+    const pepper = getPepper(convertStringToNumber(hash({ pepperLength: pepperStringArray.length, option })), pepperStringArray)
+    const inertString = insertPepper(encrypt1, pepper, option);
+    const encrypt = singleEncryption(encryptionStrings, inertString, `${keyType}2`, option)
     return encrypt;
 }
 
@@ -70,10 +53,11 @@ export function encryptText(keyGroup: keyGroups, inputData: string, keyType: num
  * @keyType denotes whether or not key group A or B should be utilized
  * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
 */
-export function decryptData(keyGroup: keyGroups, cipherText: string, keyType: number, option?: string) {
-    const bytes1 = singleDecrypt(keyGroup, cipherText, 2, keyType, option)
-    const removeString = removePepper(bytes1, getPepper(convertStringToNumber(hash(getPepperString() + option))), option)
-    const bytes = singleDecrypt(keyGroup, removeString, 1, keyType, option)
+export function decryptData(encryptionStrings: string[], cipherText: string, keyType: string | number, pepperStringArray: string[], option?: string) {
+    const bytes1 = singleDecrypt(encryptionStrings, cipherText, `${keyType}2`, option)
+    const pepper = getPepper(convertStringToNumber(hash({ pepperLength: pepperStringArray.length, option })), pepperStringArray)
+    const removeString = removePepper(bytes1, pepper, option)
+    const bytes = singleDecrypt(encryptionStrings, removeString, `${keyType}1`, option)
     return bytes
 }
 
@@ -84,10 +68,10 @@ type acceptedObjectEncryption = { [key: string | number]: string | number | bool
  * @keyType denotes whether or not key group A or B should be utilized
  * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
  */
-export function encryptObjectData(keyGroup: keyGroups, data: acceptedObjectEncryption, keyType: number, optString?: string): { [key: string]: string } {
+export function encryptObjectData(encryptionStrings: string[], data: acceptedObjectEncryption, keyType: string | number, pepperString: string[], optString?: string | number): { [key: string]: string } {
     const opt = optString ?? "";
     const keys = Object.keys(data)
-    const values = Object.values(data).map((e, i) => encryptText(keyGroup, String(e), keyType, (opt + keys[i])))
+    const values = Object.values(data).map((e, i) => encryptText(encryptionStrings, String(e), keyType, pepperString, (opt + keys[i])))
     return keys.reduce((o, k, i) => ({ ...o, [k]: values[i] }), {} as { [key: string]: string })
 }
 
@@ -96,12 +80,12 @@ export function encryptObjectData(keyGroup: keyGroups, data: acceptedObjectEncry
  * @keyType denotes whether or not key group A or B should be utilized
  * @Options is used to help give variation when encrypting data. This helps choosing different encryption keys when encrypting multiple data entries
  */
-export function decryptObject<T = ({ [key: string]: string | number | boolean | undefined | null })>(keyGroup: keyGroups, encryptedData: acceptedObjectEncryption, keyType: number, optString?: string): T {
+export function decryptObject<T = ({ [key: string]: string | number | boolean | undefined | null })>(encryptionStrings: string[], encryptedData: acceptedObjectEncryption, keyType: string | number, pepperString: string[], optString?: string | number): T {
     const opt = optString ?? "";
     const keys = Object.keys(encryptedData)
     const values: any[] = Object.values(encryptedData);
     const decryptValues = values.map((e, i) => {
-        const data = decryptData(keyGroup, e, keyType, (opt + keys[i]))
+        const data = decryptData(encryptionStrings, e, keyType, pepperString, (opt + keys[i]))
 
         if (data === "true" || data === "false") return data === "true"
         else if (Number(data)) return Number(data)
@@ -113,35 +97,35 @@ export function decryptObject<T = ({ [key: string]: string | number | boolean | 
     return reduced;
 }
 
-export function NEncryption(keyGroup: keyGroups, inputData: string, keyType: number, option?: string, round: number = 2) {
+export function NEncryption(encryptionStrings: string[], inputData: string, keyType: string | number, option?: string | number, round: number = 2) {
     let text = inputData
     for (let i = 0; i < round; i++) {
-        text = singleEncryption(keyGroup, text, i, keyType, `${option ?? ""}${i}`);
+        text = singleEncryption(encryptionStrings, text, keyType, `${option ?? ""}${i}`);
     }
     return text
 }
 
-export function NDecryption(keyGroup: keyGroups, inputData: string, keyType: number, option?: string, round: number = 2) {
+export function NDecryption(encryptionStrings: string[], inputData: string, keyType: string | number, option?: string | number, round: number = 2) {
     let text = inputData
     for (let i = round - 1; i > -1; i--) {
-        text = singleDecrypt(keyGroup, text, i, keyType, `${option ?? ""}${i}`);
+        text = singleDecrypt(encryptionStrings, text, keyType, `${option ?? ""}${i}`);
     }
     return text
 }
 
 export default class EncryptionManager {
-    private getKeys: () => keyGroups;
-    constructor(getKeys: () => keyGroups) {
+    private getKeys: () => string[];
+    constructor(getKeys: () => string[]) {
         this.getKeys = getKeys
     }
-    singleEncryption = (inputData: string, varNum: number, keyType: number, option?: string | undefined) => singleEncryption(this.getKeys(), inputData, varNum, keyType, option);
-    singleDecrypt = (cipherText: string, varNum: number, keyType: number, option?: string | undefined) => singleDecrypt(this.getKeys(), cipherText, varNum, keyType, option)
-    encryptText = (inputData: string, keyType: number, option?: string | undefined) => encryptText(this.getKeys(), inputData, keyType, option)
-    decryptData = (cipherText: string, keyType: number, option?: string | undefined) => decryptData(this.getKeys(), cipherText, keyType, option)
-    encryptObjectData = (data: acceptedObjectEncryption, keyType: number, optString?: string | undefined) => encryptObjectData(this.getKeys(), data, keyType, optString)
-    decryptObject = (data: acceptedObjectEncryption, keyType: number, optString?: string | undefined) => decryptObject(this.getKeys(), data, keyType, optString)
-    NEncryption = (inputData: string, keyType: number, option?: string | undefined, round?: number) => NEncryption(this.getKeys(), inputData, keyType, option, round)
-    NDecryption = (inputData: string, keyType: number, option?: string | undefined, round?: number) => NDecryption(this.getKeys(), inputData, keyType, option, round)
+    singleEncryption = (inputData: string, keyType: string | number, option?: string | number | undefined) => singleEncryption(this.getKeys(), inputData, keyType, option);
+    singleDecrypt = (cipherText: string, keyType: string | number, option?: string | number | undefined) => singleDecrypt(this.getKeys(), cipherText, keyType, option)
+    encryptText = (inputData: string, keyType: string | number, pepperString: string[], option?: string | undefined) => encryptText(this.getKeys(), inputData, keyType, pepperString, option)
+    decryptData = (cipherText: string, keyType: string | number, pepperString: string[], option?: string | undefined) => decryptData(this.getKeys(), cipherText, keyType, pepperString, option)
+    encryptObjectData = (data: acceptedObjectEncryption, keyType: string | number, pepperString: string[], optString?: string | number | undefined) => encryptObjectData(this.getKeys(), data, keyType, pepperString, optString)
+    decryptObject = (encryptedObject: acceptedObjectEncryption, keyType: string | number, pepperString: string[], optString?: string | number | undefined) => decryptObject(this.getKeys(), encryptedObject, keyType, pepperString, optString)
+    NEncryption = (inputData: string, keyType: string | number, option?: string | number | undefined, round?: number) => NEncryption(this.getKeys(), inputData, keyType, option, round)
+    NDecryption = (cipherText: string, keyType: string | number, option?: string | number | undefined, round?: number) => NDecryption(this.getKeys(), cipherText, keyType, option, round)
 }
 
 // /** experiment*/

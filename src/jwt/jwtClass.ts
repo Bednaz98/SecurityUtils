@@ -1,5 +1,5 @@
 import { generateAccessToken, generateRefreshToken } from './GenerateUserTokens'
-import { decodeJWT, generateJWT, verifyJWT } from './JwtGeneration'
+import { decodeJWT, deleteNoneUniqueJWTProperties, generateJWT, verifyJWT } from './JwtGeneration'
 import { JWTConfig } from './types'
 
 
@@ -30,4 +30,5 @@ export default class JWTManager {
     verifyJWT = (jwtString: string, audience?: string, subject?: string) => verifyJWT(jwtString, this.getJWTKey(), this.issuer, audience, subject)
     generateAccessToken = (userID: string, options?: any, audience?: string) => generateAccessToken(userID, this.issuer, this.getJWTKey(), this.accessTokenValidTime, options, audience)
     generateRefreshToken = (userID: string, options?: any, audience?: string) => generateRefreshToken(userID, this.issuer, this.getJWTKey(), this.refreshTokenValidTime, options, audience)
+    deleteNoneUniqueJWTProperties = (JWTObject: any) => deleteNoneUniqueJWTProperties(JWTObject)
 }

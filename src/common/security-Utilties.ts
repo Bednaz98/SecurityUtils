@@ -1,15 +1,14 @@
+import { convertStringToNumber } from '@jabz/math-js';
 import hash from 'object-hash'
-import { convertStringToNumber } from './utilities';
+import CryptoJS from 'crypto-js'
 
-
-
-/** INTERNAL FUNCTION DO NOT USE DIRECTLY, gets a pepper string from the systems environment variables*/
-export function getPepperString(): string { return hash(process.env.SERVER_HASH_PEPPER_STRING ?? "default") }
 
 /** INTERNAL FUNCTION DO NOT USE DIRECTLY, gets a pepper character from the system pepper string*/
-export function getPepper(value: number): string {
-    const pepperString = getPepperString();
-    return pepperString[value % pepperString.length];
+export function getPepper(value: number, pepperString: string[]): string {
+    const value1 = pepperString[value % pepperString.length];
+    const value2 = pepperString[((value + 1) * 2) % pepperString.length];
+    const value3 = pepperString[((value + 2) * 3) % pepperString.length];
+    return hash({ value1, value2, value3 })[value % pepperString.length];
 }
 
 
@@ -37,4 +36,9 @@ export function removePepper(insertString: string, pepper: string, insertOpt?: s
         if (i !== insertNumber) newArray.push(e)
     })
     return newArray.join('');
+}
+
+/** INTERNAL FUNCTION DO NOT USE DIRECTLY,  this is used to hash multiple keys into a unique runtime key */
+export function hashAPIKey(inputKeys: string[], option?: any) {
+    return hash({ 0: hash(inputKeys[0]), 1: hash(inputKeys[1]), 2: hash(inputKeys[2]), option });
 }

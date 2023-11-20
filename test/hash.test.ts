@@ -4,6 +4,7 @@ import { compareHash, getSaltRounds, hashData, insertHashPepper } from '../src/h
 
 describe('Test Hash Functions', () => {
     const OLD_ENV = process.env;
+    const pepperArray = ["test", "default", "other"]
 
     beforeEach(() => {
         jest.resetModules()
@@ -27,7 +28,7 @@ describe('Test Hash Functions', () => {
     it('insertPepper', () => {
         const hashString = "test", dataType = 8;
         const unPepperString = hash(hashString + hashString + dataType);
-        const pepperString = insertHashPepper(hashString, dataType);
+        const pepperString = insertHashPepper(hashString, dataType, pepperArray);
         expect(unPepperString).not.toBe(pepperString);
         expect(unPepperString.length === pepperString.length).toBeFalsy();
     })
@@ -37,10 +38,10 @@ describe('Test Hash Functions', () => {
         const testHash = hash(testHashData);
         const unPepperString = hash(testHash + testHash + index);
         const hashTest = await bcrypt.hash(unPepperString, getSaltRounds());
-        const checkHash = await hashData(testHashData, index);
+        const checkHash = await hashData(testHashData, index, pepperArray);
         expect(hashTest === checkHash).toBeFalsy();
-        expect(await compareHash(testHashData, index, hashTest)).toBeFalsy();
-        expect(await compareHash(testHashData, index, checkHash)).toBeTruthy();
+        expect(await compareHash(testHashData, index, hashTest, pepperArray)).toBeFalsy();
+        expect(await compareHash(testHashData, index, checkHash, pepperArray)).toBeTruthy();
 
     })
 })

@@ -2,14 +2,17 @@ import jwt from 'jsonwebtoken';
 import { v4 } from 'uuid';
 import hash from 'object-hash'
 import { JWTConfig } from './types';
-import { convertStringToNumber } from '../common/utilities';
+import { convertStringToNumber } from '@jabz/math-js';
+import { hashAPIKey } from '../common';
+
 
 
 /**  INTERNAL FUNCTION DO NOT USE DIRECTLY, gets the jwt string from a list of environment variables*/
 export function getJWTKey(index: number, keyArray: string[]): string {
-    const key1 = keyArray[index % keyArray.length]
-    const key2 = keyArray[(index + 2) % keyArray.length]
-    return hash({ key1, key2, index, keyArray });
+    const key1 = keyArray[index + 1 % keyArray.length]
+    const key2 = keyArray[(index * 3 + 2) % keyArray.length]
+    const key3 = keyArray[(index * 2 + 3) % keyArray.length]
+    return hashAPIKey([key1, key2, key3,], index);
 }
 
 /** remove all standard JWT properties to get back injected data*/
