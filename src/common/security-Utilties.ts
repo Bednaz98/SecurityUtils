@@ -40,5 +40,8 @@ export function removePepper(insertString: string, pepper: string, insertOpt?: s
 
 /** INTERNAL FUNCTION DO NOT USE DIRECTLY,  this is used to hash multiple keys into a unique runtime key */
 export function hashAPIKey(inputKeys: string[], option?: any) {
-    return hash({ 0: hash(inputKeys[0]), 1: hash(inputKeys[1]), 2: hash(inputKeys[2]), option });
+    const key1 = hash({ val: inputKeys[0] })
+    const key2 = hash({ val: inputKeys[1] })
+    const key3 = hash({ val: inputKeys[2] })
+    return hash({ key1, key2, key3, option });
 }

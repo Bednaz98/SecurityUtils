@@ -1,7 +1,8 @@
 
-import hash from 'object-hash'
+
 import { v4 } from 'uuid'
-import { getPepper, getInsertIndex, insertPepper, removePepper } from '../src/common/security-Utilties';
+import { getPepper, getInsertIndex, insertPepper, removePepper, hashAPIKey, } from '../src/common/security-Utilties';
+
 
 
 describe('Security Utilities', () => {
@@ -57,5 +58,14 @@ describe('Security Utilities', () => {
             expect(recoverString).toBe(testString)
         }
 
+    })
+    it('hashAPIKey', () => {
+        const test: string[] = []
+        for (let i = 0; i < 50; i++) {
+            const result = hashAPIKey(pepperArray, i)
+            expect(typeof result === "string").toBeTruthy()
+            expect(test.includes(result)).toBeFalsy()
+            test.push(result)
+        }
     })
 })
