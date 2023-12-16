@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
 import { v4 } from 'uuid';
-import hash from 'object-hash'
 import { JWTConfig } from './types';
 import { convertStringToNumber } from '@jabz/math-js';
 import { hashAPIKey } from '../common';

@@ -34,12 +34,11 @@ describe('encryption test', () => {
     const encryptionClass = new EncryptionManager(() => keyGroup)
 
 
-    const randomString = () => v4() + v4() + v4() + `${Math.random()}` + `!@#$%^&*()_+=-09876543321~|{}[];:?/><,. \n$ @$% @#$% !#H R46 46 3rh r 357 \tryh r3y6 5346feh 3w45rfe aewrh `
+    const randomString = () => v4() + v4() + v4() + `${Math.random()}` + `!@#$%^&*()_+=-09876543321~|{}[];:?/><,. \n$ @$% @#$% !#H R46 46 3rh \rr 357 \tryh r3y6 5346feh 3w45rfe aewrh `
     it("Test Single Encryption", () => {
         const inputText = randomString();
         const key = 0
         const opt = undefined
-        const varNum = 0
         const encrypt = encryptionClass.singleEncryption(inputText, key, opt)
         const decrypt = encryptionClass.singleDecrypt(encrypt, key, opt)
         expect(decrypt).toEqual(inputText)

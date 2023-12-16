@@ -18,22 +18,15 @@ export function getEncryptionKey(encryptionStrings: string[], keyType: string | 
     return JSON.stringify(hashAPIKey([hashA, hashB, hashC], `${keyType}${varString}`))
 }
 
-/** INTERNAL FUNCTION DO NOT USE DIRECTLY,  gets a single character string from the pepper array*/
-export function getEncryptionPepper(index: number, pepperArray: string[]) {
-    return getPepper(index + 3, pepperArray)
-}
-
-
-
 export function singleEncryption(encryptionStrings: string[], inputData: string, encryptVar: string | number, keyType?: string | number) {
     const key = getEncryptionKey(encryptionStrings, encryptVar, keyType)
-    const encrypt = CryptoJS.AES.encrypt(JSON.stringify({ inputData }), key).toString()
+    const encrypt = CryptoJS.AES.encrypt(inputData.toString(), key).toString()
     return encrypt
 }
 export function singleDecrypt(encryptionStrings: string[], cipherText: string, encryptVar: string | number, keyType?: string | number) {
     const key = getEncryptionKey(encryptionStrings, encryptVar, keyType)
-    const decryptData = CryptoJS.AES.decrypt(cipherText, key).toString(CryptoJS.enc.Utf8)
-    return JSON.parse(decryptData).inputData
+    const decryptData = CryptoJS.AES.decrypt(cipherText.toString(), key).toString()
+    return decryptData
 }
 
 
