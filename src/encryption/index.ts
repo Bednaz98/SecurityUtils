@@ -25,7 +25,7 @@ export function singleEncryption(encryptionStrings: string[], inputData: string,
 }
 export function singleDecrypt(encryptionStrings: string[], cipherText: string, encryptVar: string | number, keyType?: string | number) {
     const key = getEncryptionKey(encryptionStrings, encryptVar, keyType)
-    const decryptData = CryptoJS.AES.decrypt(cipherText.toString(), key).toString()
+    const decryptData = CryptoJS.AES.decrypt(cipherText.toString(), key).toString(CryptoJS.enc.Utf8)
     return decryptData
 }
 
