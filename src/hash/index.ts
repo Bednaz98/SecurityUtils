@@ -27,14 +27,16 @@ export function insertHashPepper(insertString: string, dataType: number, pepperS
 */
 export async function hashData(inputData: any, dataType: number, pepperString: string[]): Promise<string> {
     const tempData = insertHashPepper(hash(inputData), dataType, pepperString)
-    const temp2 = insertHashPepper(tempData, dataType + 2, pepperString)
+    const hash1 = hash({ data: tempData + getSaltRounds() })
+    const temp2 = insertHashPepper(hash1, dataType + 2, pepperString)
     return await bcrypt.hash(temp2, getSaltRounds());
 }
 
 /** used to verify if the hash string is derived from the input data */
 export async function compareHash(inputData: any, dataType: number, hashString: string, pepperString: string[]): Promise<boolean> {
     const tempData = insertHashPepper(hash(inputData), dataType, pepperString)
-    const temp2 = insertHashPepper(tempData, dataType + 2, pepperString)
+    const hash1 = hash({ data: tempData + getSaltRounds() })
+    const temp2 = insertHashPepper(hash1, dataType + 2, pepperString)
     return await bcrypt.compare(temp2, hashString);
 }
 
