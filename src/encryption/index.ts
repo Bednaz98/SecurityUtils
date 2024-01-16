@@ -119,6 +119,7 @@ export default class EncryptionManager {
     decryptObject = (encryptedObject: acceptedObjectEncryption, keyType: string | number, pepperString: string[], optString?: string | number | undefined) => decryptObject(this.getKeys(), encryptedObject, keyType, pepperString, optString)
     NEncryption = (inputData: string, keyType: string | number, option?: string | number | undefined, round?: number) => NEncryption(this.getKeys(), inputData, keyType, option, round)
     NDecryption = (cipherText: string, keyType: string | number, option?: string | number | undefined, round?: number) => NDecryption(this.getKeys(), cipherText, keyType, option, round)
+    overrideGetKeys = (newFunction: () => string[]) => this.getKeys = newFunction;
 }
 
 // /** experiment*/
