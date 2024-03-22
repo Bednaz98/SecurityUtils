@@ -68,3 +68,16 @@ export function verifyJWT(jwtString: string, keyArray: string[], issuer: string,
         return false;
     }
 }
+
+export function verifyJWTMulti(jwtString: string, keyArray: string[][], issuer: string, audience?: string, subject?: string) {
+    try {
+        let checkArray: boolean[] = []
+        for (let i = 0; i < keyArray.length; i++) {
+            const currentArray = keyArray[i]
+            checkArray.push(verifyJWT(jwtString, currentArray, issuer, audience, subject))
+        }
+        return checkArray.includes(true);
+    } catch (error) {
+        return false
+    }
+}

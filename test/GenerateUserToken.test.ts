@@ -1,4 +1,4 @@
-import { JWTManagerConfig, deleteNoneUniqueJWTProperties } from '../src/jwt'
+import { JWTManagerConfig, deleteNoneUniqueJWTProperties, generateJWT, verifyJWTMulti } from '../src/jwt'
 import { v4 } from 'uuid';
 import { JWTManager } from '../src/jwt/jwtClass';
 
@@ -59,7 +59,7 @@ describe('Generate JWT Test', () => {
         const result2 = jWTManager.verifyJWT('afhawf', undefined, data.subject)
         expect(result2).toBeFalsy()
     })
-    it(' verify access JWT normal checks', () => {
+    it('verify access JWT normal checks', () => {
         const data: any = {
             test2: "test",
             expireTime: 10,
@@ -73,7 +73,7 @@ describe('Generate JWT Test', () => {
         const result2 = jWTManager.verifyJWT(jwt2, undefined, "notValid")
         expect(result2).toBeFalsy()
     })
-    it(' verify refresh JWT normal checks', () => {
+    it('verify refresh JWT normal checks', () => {
         const data: any = {
             test2: "test",
             expireTime: 10,
@@ -86,6 +86,21 @@ describe('Generate JWT Test', () => {
         const jwt2 = jWTManager.generateRefreshToken("testUser", undefined, data.audience)
         const result2 = jWTManager.verifyJWT(jwt2, undefined, "notValid")
         expect(result2).toBeFalsy()
+    })
+    it('verifyJWTMulti normal', () => {
+        const checkArray = [[v4(), v4(), v4(), v4(), v4()], [v4(), v4(), v4(), v4(), v4()], [v4(), v4(), v4(), v4(), v4()], [v4(), v4(), v4(), v4(), v4()]]
+        for (let i = 0; i < 50; i++) {
+            const jwt = generateJWT({}, config.issuer, checkArray[i % checkArray.length])
+            expect(verifyJWTMulti(jwt, checkArray, config.issuer)).toBeTruthy()
+        }
+    })
+    it('verifyJWTMulti failed', () => {
+        const checkArray = [[v4(), v4(), v4(), v4(), v4()], [v4(), v4(), v4(), v4(), v4()], [v4(), v4(), v4(), v4(), v4()], [v4(), v4(), v4(), v4(), v4()]]
+        const falseArray = [[v4(), v4(), v4(), v4(), v4()], [v4(), v4(), v4(), v4(), v4()], [v4(), v4(), v4(), v4(), v4()], [v4(), v4(), v4(), v4(), v4()]]
+        for (let i = 0; i < 50; i++) {
+            const jwt = generateJWT({}, config.issuer, checkArray[i % checkArray.length])
+            expect(verifyJWTMulti(jwt, falseArray, config.issuer)).toBeFalsy()
+        }
     })
 
 })
