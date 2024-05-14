@@ -52,7 +52,6 @@ const jwtManager = new JWTManager(config);
 # Encryption Manager
 
 With this class, a "single encryption step" goes as follows:
-- pull 3 
 - encrypt the data once
 - add a pepper
 - encrypt the data again
